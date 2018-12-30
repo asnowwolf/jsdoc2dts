@@ -1,0 +1,43 @@
+{
+  "name": "@awesome-fe/jsdoc-to-dts",
+  "description": "transform jsdoc to dts",
+  "main": "./dist/index.js",
+  "bin": {
+    "nt": "dist/bin/index.js"
+  },
+  "version": "0.0.1",
+  "author": "Zhicheng Wang<asnowwolf@gmail.com>",
+  "homepage": "https://github.com/asnowwolf/jsdoc-to-dts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asnowwolf/jsdoc-to-dts.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/asnowwolf/jsdoc-to-dts/issues"
+  },
+  "scripts": {
+    "start": "ts-node src/bin/index.ts",
+    "prelink": "rm -fr dist && tsc",
+    "prepublish": "rm -fr dist && tsc"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/globby": "^8.0.0",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^9.6.41",
+    "@types/vfile": "^3.0.2",
+    "@types/yargs": "^12.0.8",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "ts-node": "^5.0.1",
+    "tslint": "^5.12.0",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "globby": "^8.0.1",
+    "rxjs": "^6.3.3",
+    "vfile": "^4.0.0",
+    "yargs": "^12.0.5"
+  }
+}
