@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import 'core-js/es/array';
 import * as yargs from 'yargs';
 
 yargs

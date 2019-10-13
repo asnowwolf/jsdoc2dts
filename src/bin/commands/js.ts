@@ -1,6 +1,7 @@
 import { CommandBuilder } from 'yargs';
+import { docToDts } from '../../doc-to-dts';
 
-export const command = `js <sourceGlob> <targetDir>`;
+export const command = `js <targetDir> <sourceGlob...>`;
 
 export const describe = '从 es5/es6 源码中收集 jsdoc 注释，输出为 *.d.ts 格式，放到 targetDir 目录下';
 
@@ -14,10 +15,10 @@ export const builder: CommandBuilder = {
 };
 
 interface Params {
-  sourceGlob: string;
+  sourceGlob: string[];
   targetDir: string;
 }
 
 export const handler = function ({ sourceGlob, targetDir }: Params) {
-  console.log(sourceGlob, targetDir);
+  docToDts(sourceGlob, targetDir);
 };
