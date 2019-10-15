@@ -1,9 +1,9 @@
 import { CommandBuilder } from 'yargs';
-import { docToJson } from '../../doc-to-json';
+import { docToDts } from '../../doc-to-dts';
 
-export const command = `ast <targetDir> <sourceGlob...>`;
+export const command = `dts <targetDir> <sourceGlob...>`;
 
-export const describe = '从 es5/es6 源码中收集 jsdoc 注释，把解析结果输出为 JSON 格式，放到 targetDir 目录下';
+export const describe = '从 es5/es6 源码中收集 jsdoc 注释，输出为 *.d.ts 格式，放到 targetDir 目录下';
 
 export const builder: CommandBuilder = {
   targetDir: {
@@ -20,5 +20,5 @@ interface Params {
 }
 
 export const handler = function ({ sourceGlob, targetDir }: Params) {
-  docToJson(sourceGlob, targetDir);
+  docToDts(sourceGlob, targetDir);
 };

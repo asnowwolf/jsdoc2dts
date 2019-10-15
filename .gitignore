@@ -118,3 +118,5 @@ typings/
 dist/
 
 /temp
+
+/src/test/output/

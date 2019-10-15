@@ -42,6 +42,8 @@ export interface JsDocEntry {
 }
 
 export enum Kind {
+  // 类
+  Class = 'class',
   // 函数/方法
   Function = 'function',
   // 变量/属性

@@ -5,6 +5,6 @@ import { getClasses } from './transform-content';
 describe('transform ast', () => {
   it('get classes', () => {
     const jsDocAst = explainSync({ files: './src/test/samples/Graph.js' });
-    expect(getClasses(jsDocAst).map(it => it.longname)).eql('');
+    expect(getClasses(jsDocAst).map(it => it.longname)).eql(['Graph']);
   });
 });
