@@ -24,6 +24,7 @@
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/globby": "^8.0.0",
+    "@types/lodash": "^4.14.144",
     "@types/mkdirp": "^0.5.2",
     "@types/mocha": "^5.2.5",
     "@types/node": "^9.6.41",
@@ -39,6 +40,7 @@
     "core-js": "^3.2.1",
     "globby": "^8.0.1",
     "jsdoc-api": "^5.0.3",
+    "lodash": "^4.17.15",
     "mkdirp": "^0.5.1",
     "rxjs": "^6.3.3",
     "vfile": "^4.0.0",
