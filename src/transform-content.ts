@@ -1,6 +1,7 @@
-import { JsDocEntry } from 'jsdoc-api';
+import { Code, JsDocEntry } from 'jsdoc-api';
 import { uniqBy } from 'lodash';
 import * as ts from 'typescript';
+import { isBoolean, isNumber, isString } from 'util';
 
 export function getClasses(jsDocAst: JsDocEntry[]): JsDocEntry[] {
   return jsDocAst.filter(it => it.kind === 'class');
@@ -23,8 +24,66 @@ function createMethod(entry: JsDocEntry): ts.MethodDeclaration {
     entry.meta!.code!.paramnames!.map(name => createParameter(name)), undefined, undefined);
 }
 
+function detectType(value: boolean | number | string): ts.KeywordTypeNode['kind'] {
+  if (isNumber(value)) {
+    return ts.SyntaxKind.NumberKeyword;
+  } else if (isBoolean(value)) {
+    return ts.SyntaxKind.BooleanKeyword;
+  } else if (isString(value)) {
+    return ts.SyntaxKind.StringKeyword;
+  }
+  return ts.SyntaxKind.AnyKeyword;
+}
+
+function typeOf(code: Code): ts.TypeNode {
+  switch (code.type) {
+    // 数组
+    case 'ArrayExpression':
+      return ts.createArrayTypeNode(ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword));
+    // // 赋值表达式（局部变量）
+    // case 'AssignmentExpression':
+    //   return ts.createTypeNode();
+    // // 二元表达式
+    // case 'BinaryExpression':
+    //   return ts.createTypeNode();
+    // // 函数调用
+    // case 'CallExpression':
+    //   return ts.createTypeNode();
+    // // 条件表达式（三目）
+    case 'ConditionalExpression':
+      return ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+    // // 普通函数声明
+    // case 'FunctionDeclaration':
+    //   return ts.createKeywordTypeNode(ts.SyntaxKind.FunctionKeyword);
+    // // 函数表达式式声明（匿名函数赋值）
+    // case 'FunctionExpression':
+    //   return ts.createTypeNode();
+    // // 对属性赋值
+    // case 'Identifier':
+    //   return ts.createTypeNode();
+    // // 字面量赋值
+    case 'Literal':
+      return ts.createKeywordTypeNode(detectType(code.value));
+    // 逻辑表达式
+    case 'LogicalExpression':
+      return ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+    // // 成员表达式，用于声明哈希对象
+    // case 'MemberExpression':
+    //   return ts.createTypeNode();
+    // // new 表达式
+    // case 'NewExpression':
+    //   return ts.createTypeNode();
+    // 一元表达式
+    case 'UnaryExpression':
+      return ts.createKeywordTypeNode(detectType(code.value));
+    default:
+      return ts.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword);
+  }
+}
+
 function createProperty(entry: JsDocEntry): ts.PropertyDeclaration {
-  return ts.createProperty([], modifierOf(entry), entry.name!, undefined, undefined, undefined);
+  const code = entry.meta!.code!;
+  return ts.createProperty([], modifierOf(entry), entry.name!, undefined, typeOf(code), undefined);
 }
 
 export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statement> {

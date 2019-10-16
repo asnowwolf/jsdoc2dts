@@ -81,7 +81,7 @@ export interface Code {
   // 函数的参数名
   paramnames?: string[];
   // 属性值
-  value?: boolean | number | null | string;
+  value: boolean | number | string;
   // 局部变量所属的函数全名
   funcscope?: string;
 }
