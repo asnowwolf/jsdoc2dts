@@ -34,9 +34,16 @@ function modifierOf(entry: JsDocEntry) {
   return modifiers;
 }
 
+function createParameters(entry: JsDocEntry): ts.ParameterDeclaration[] {
+  if (!entry.meta || !entry.meta.code.paramnames) {
+    return [];
+  }
+  return entry.meta.code.paramnames.map(name => createParameter(name));
+}
+
 function createMethod(entry: JsDocEntry): ts.MethodDeclaration {
   return ts.createMethod([], modifierOf(entry), undefined, entry.name!, undefined, undefined,
-    entry.meta!.code!.paramnames!.map(name => createParameter(name)), undefined, undefined);
+    createParameters(entry), undefined, undefined);
 }
 
 function detectType(value: boolean | number | string): ts.KeywordTypeNode['kind'] {
@@ -113,8 +120,8 @@ function createProperty(entry: JsDocEntry): ts.PropertyDeclaration {
   return ts.createProperty([], modifierOf(entry), entry.name!, undefined, typeOf(code), undefined);
 }
 
-function createConstructor(clazz) {
-  return ts.createConstructor([], [], clazz.meta!.code.paramnames!.map(name => createParameter(name)), undefined);
+function createConstructor(clazz: JsDocEntry): ts.ConstructorDeclaration {
+  return ts.createConstructor([], [], createParameters(clazz), undefined);
 }
 
 function toMultilineComment(comment?: string): string {
@@ -136,14 +143,17 @@ function addComment<T extends ts.Node>(node: T, entry: JsDocEntry): T {
 }
 
 export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statement> {
-  const statements = getClasses(jsDocAst).map(clazz => {
-    const variables = uniqBy(jsDocAst.filter(it => it.kind === 'member' && it.scope === 'instance' && it.memberof === clazz.name), 'name')
+  const entries = jsDocAst.filter(it => !!it.meta);
+
+  const statements = getClasses(entries).map(clazz => {
+    const members = uniqBy(entries.filter(it => it.memberof === clazz.name), 'name');
+    const variables = members.filter(it => it.kind === 'member' && it.scope === 'instance')
       .map(it => addComment(createProperty(it), it));
-    const methods = uniqBy(jsDocAst.filter(it => it.kind === 'function' && it.scope === 'instance' && it.memberof === clazz.name), 'name')
+    const methods = members.filter(it => it.kind === 'function' && it.scope === 'instance')
       .map(it => addComment(createMethod(it), it));
-    const staticVariables = uniqBy(jsDocAst.filter(it => it.kind === 'member' && it.scope === 'static' && it.memberof === clazz.name), 'name')
+    const staticVariables = members.filter(it => it.kind === 'member' && it.scope === 'static')
       .map(it => addComment(createProperty(it), it));
-    const staticMethods = uniqBy(jsDocAst.filter(it => it.kind === 'function' && it.scope === 'static' && it.memberof === clazz.name), 'name')
+    const staticMethods = members.filter(it => it.kind === 'function' && it.scope === 'static')
       .map(it => addComment(createMethod(it), it));
     const constructor = createConstructor(clazz);
     return addComment(ts.createClassDeclaration(
