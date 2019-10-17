@@ -157,30 +157,53 @@ function createProperty(entry: JsDocEntry): ts.PropertyDeclaration {
   return ts.createProperty([], modifierOf(entry), entry.name!, undefined, typeOf(code), undefined);
 }
 
+function createConstructor(clazz) {
+  return ts.createConstructor([], [], clazz.meta!.code.paramnames!.map(name => createParameter(name)), undefined);
+}
+
+function toMultilineComment(comment?: string): string {
+  if (!comment) {
+    return '';
+  }
+  return comment.split('\n').map(line => ` * ${line}`).concat('').join('\n');
+}
+
+function addComment<T extends ts.Node>(node: T, entry: JsDocEntry): T {
+  const value = entry.meta && entry.meta.code && entry.meta.code.value;
+  if (entry.description || value) {
+    const exampleComment = value ? ` * @example ${value}\n` : '';
+    const comment = `*\n${toMultilineComment(entry.description)}${exampleComment} `;
+    return ts.addSyntheticLeadingComment(node, ts.SyntaxKind.MultiLineCommentTrivia, comment, true);
+  } else {
+    return node;
+  }
+}
+
 export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statement> {
   const statements = getClasses(jsDocAst).map(clazz => {
     const variables = uniqBy(jsDocAst.filter(it => it.kind === 'member' && it.scope === 'instance' && it.memberof === clazz.name), 'name')
-      .map(it => createProperty(it));
+      .map(it => addComment(createProperty(it), it));
     const methods = uniqBy(jsDocAst.filter(it => it.kind === 'function' && it.scope === 'instance' && it.memberof === clazz.name), 'name')
-      .map(it => createMethod(it));
+      .map(it => addComment(createMethod(it), it));
     const staticVariables = uniqBy(jsDocAst.filter(it => it.kind === 'member' && it.scope === 'static' && it.memberof === clazz.name), 'name')
-      .map(it => createProperty(it));
+      .map(it => addComment(createProperty(it), it));
     const staticMethods = uniqBy(jsDocAst.filter(it => it.kind === 'function' && it.scope === 'static' && it.memberof === clazz.name), 'name')
-      .map(it => createMethod(it));
-    return ts.createClassDeclaration(
+      .map(it => addComment(createMethod(it), it));
+    const constructor = createConstructor(clazz);
+    return addComment(ts.createClassDeclaration(
       [],
       [ts.createModifier(ts.SyntaxKind.DeclareKeyword)],
       clazz.name,
       [],
       [],
       [
-        ts.createConstructor([], [], clazz.meta!.code.paramnames!.map(name => createParameter(name)), undefined),
+        constructor,
         ...variables,
         ...methods,
         ...staticVariables,
         ...staticMethods,
       ],
-    );
+    ), clazz);
   });
 
   return ts.createNodeArray(statements, true);
