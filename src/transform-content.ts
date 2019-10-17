@@ -116,7 +116,7 @@ function typeOf(code: Code): ts.TypeNode | undefined {
     case 'UnaryExpression':
       return ts.createKeywordTypeNode(detectType(code.value));
     default:
-      return inferTypeByName(code.name);
+      return inferTypeByName(code.name.replace(/^this\./, ''));
   }
 }
 
