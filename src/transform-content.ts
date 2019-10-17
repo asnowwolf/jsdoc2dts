@@ -1,14 +1,73 @@
 import { Code, JsDocEntry } from 'jsdoc-api';
 import { uniqBy } from 'lodash';
 import * as ts from 'typescript';
-import { isBoolean, isNumber, isString } from 'util';
+import { isArray, isBoolean, isNumber, isString } from 'util';
+
+const ReferenceTypes = {
+  cell: 'mxCell',
+  evt: 'Event',
+  node: 'Node',
+  container: 'HTMLElement',
+};
+
+const KeywordTypes = {
+  width: ts.SyntaxKind.NumberKeyword,
+  height: ts.SyntaxKind.NumberKeyword,
+  w: ts.SyntaxKind.NumberKeyword,
+  h: ts.SyntaxKind.NumberKeyword,
+  length: ts.SyntaxKind.NumberKeyword,
+  index: ts.SyntaxKind.NumberKeyword,
+  x: ts.SyntaxKind.NumberKeyword,
+  y: ts.SyntaxKind.NumberKeyword,
+  dx: ts.SyntaxKind.NumberKeyword,
+  dy: ts.SyntaxKind.NumberKeyword,
+  href: ts.SyntaxKind.StringKeyword,
+  text: ts.SyntaxKind.StringKeyword,
+  url: ts.SyntaxKind.StringKeyword,
+  target: ts.SyntaxKind.StringKeyword,
+  link: ts.SyntaxKind.StringKeyword,
+  name: ts.SyntaxKind.StringKeyword,
+  tagName: ts.SyntaxKind.StringKeyword,
+  evtName: ts.SyntaxKind.StringKeyword,
+  str: ts.SyntaxKind.StringKeyword,
+  attributeName: ts.SyntaxKind.StringKeyword,
+  label: ts.SyntaxKind.StringKeyword,
+  html: ts.SyntaxKind.StringKeyword,
+  clone: ts.SyntaxKind.BooleanKeyword,
+  hasShadow: ts.SyntaxKind.BooleanKeyword,
+  showText: ts.SyntaxKind.BooleanKeyword,
+  nocrop: ts.SyntaxKind.BooleanKeyword,
+  allowOpener: ts.SyntaxKind.BooleanKeyword,
+};
+
+const ArrayTypes = {
+  names: ts.createArrayTypeNode(ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)),
+  cells: ts.createArrayTypeNode(ts.createTypeReferenceNode('mxCell', undefined)),
+};
 
 export function getClasses(jsDocAst: JsDocEntry[]): JsDocEntry[] {
   return jsDocAst.filter(it => it.kind === 'class');
 }
 
+function inferTypeByName(name: string): ts.TypeNode | undefined {
+  const referenceType = ReferenceTypes[name];
+  if (referenceType) {
+    return ts.createTypeReferenceNode(referenceType, undefined);
+  }
+  const keywordType = KeywordTypes[name];
+  if (keywordType) {
+    return ts.createKeywordTypeNode(keywordType);
+  }
+
+  const arrayType = ArrayTypes[name];
+  if (arrayType) {
+    return arrayType;
+  }
+}
+
 function createParameter(name: string): ts.ParameterDeclaration {
-  return ts.createParameter([], [], undefined, name);
+  const type = inferTypeByName(name);
+  return ts.createParameter([], [], undefined, name, undefined, type);
 }
 
 function modifierOf(entry: JsDocEntry) {
@@ -32,6 +91,14 @@ function detectType(value: boolean | number | string): ts.KeywordTypeNode['kind'
   } else if (isString(value)) {
     return ts.SyntaxKind.StringKeyword;
   }
+  return ts.SyntaxKind.UnknownKeyword;
+}
+
+function detectArrayType(value: string): ts.KeywordTypeNode['kind'] {
+  const array = JSON.parse(value) as any[];
+  if (isArray(array)) {
+    return detectType(array[0]);
+  }
   return ts.SyntaxKind.AnyKeyword;
 }
 
@@ -39,7 +106,7 @@ function typeOf(code: Code): ts.TypeNode {
   switch (code.type) {
     // 数组
     case 'ArrayExpression':
-      return ts.createArrayTypeNode(ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword));
+      return ts.createArrayTypeNode(ts.createKeywordTypeNode(detectArrayType(code.value as string)));
     // // 赋值表达式（局部变量）
     // case 'AssignmentExpression':
     //   return ts.createTypeNode();
@@ -67,12 +134,16 @@ function typeOf(code: Code): ts.TypeNode {
     // 逻辑表达式
     case 'LogicalExpression':
       return ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+    // 对象表达式
+    case 'ObjectExpression':
+      return ts.createKeywordTypeNode(ts.SyntaxKind.ObjectKeyword);
     // // 成员表达式，用于声明哈希对象
     // case 'MemberExpression':
     //   return ts.createTypeNode();
     // // new 表达式
-    // case 'NewExpression':
-    //   return ts.createTypeNode();
+    case 'NewExpression':
+      const typeName = code.fragment!.replace(/^.*\bnew +(\w+).*$/, '$1');
+      return ts.createTypeReferenceNode(typeName, []);
     // 一元表达式
     case 'UnaryExpression':
       return ts.createKeywordTypeNode(detectType(code.value));
