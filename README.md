@@ -1,4 +1,7 @@
-# 用途
+# Usage
 
-从 es5/es6 文件中搜集 jsdoc 注释，将其转换成 *.d.ts 格式
+Collect JSDoc comments from javascript(es5/es6) files and generate typescript files accordingly.
 
+# Example
+
+`jsdoc2ts dts ./output ./input/foo.js ./input/**/*.js --types=./mxGraph-types.json`

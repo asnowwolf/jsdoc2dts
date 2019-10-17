@@ -1,6 +1,6 @@
 {
   "name": "@awesome-fe/jsdoc-to-ts",
-  "description": "transform jsdoc to ts",
+  "description": "Collect JSDoc comments from javascript(es5/es6) files and generate typescript files accordingly",
   "main": "./dist/index.js",
   "bin": {
     "jsdoc2ts": "dist/bin/index.js"
