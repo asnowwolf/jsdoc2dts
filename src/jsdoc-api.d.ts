@@ -16,6 +16,21 @@ export interface JsDocOptions {
   tutorials?: string;
 }
 
+export interface DataType {
+  names: string[];
+}
+
+export interface ParamDef {
+  type?: DataType;
+  name: string;
+  description?: string;
+}
+
+export interface ReturnDef {
+  type: DataType;
+  description?: string;
+}
+
 export interface JsDocEntry {
   // 注释本身，包含 /** */。可能为空串
   comment?: string;
@@ -36,7 +51,9 @@ export interface JsDocEntry {
   // 所属对象
   memberof?: string;
   // @param 参数注释
-  params?: any[];
+  params?: ParamDef[];
+  // @returns 返回值注释
+  returns?: ReturnDef[];
   // 所属文件名，用于 King.Package
   files?: string[];
 }

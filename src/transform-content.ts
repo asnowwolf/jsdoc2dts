@@ -1,4 +1,4 @@
-import { Code, JsDocEntry } from 'jsdoc-api';
+import { Code, JsDocEntry, ParamDef } from 'jsdoc-api';
 import { uniqBy } from 'lodash';
 import * as ts from 'typescript';
 import { isArray, isBoolean, isNumber, isString } from 'util';
@@ -8,22 +8,41 @@ export function getClasses(jsDocAst: JsDocEntry[]): JsDocEntry[] {
   return jsDocAst.filter(it => it.kind === 'class');
 }
 
-function parseTypeNode(typeExpression: string): ts.TypeNode | undefined {
+const anyType = ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
+
+function parseTypeNode(typeExpression: string): ts.TypeNode {
   const sourceFile = ts.createSourceFile('anonymouse.js', `const a: ${typeExpression}`, ts.ScriptTarget.ES5);
   const statement = sourceFile.statements[0] as ts.VariableStatement;
-  return statement.declarationList.declarations[0].type;
+  return statement.declarationList.declarations[0].type || anyType;
 }
 
-function inferTypeByName(name: string): ts.TypeNode | undefined {
+function inferTypeByName(name: string): ts.TypeNode {
   const entries = Object.entries(typeMapping);
   const [, typeExpression] = entries.find(([key]) => new RegExp(`^${key}$`).test(name)) || [];
   if (typeExpression) {
     return parseTypeNode(typeExpression);
+  } else {
+    return anyType;
   }
 }
 
-function createParameter(name: string): ts.ParameterDeclaration {
-  const type = inferTypeByName(name);
+function isAnyType(type?: ts.TypeNode): boolean {
+  return !!type && type.kind === ts.SyntaxKind.AnyKeyword;
+}
+
+function parseTypeNodes(names: string[]): ts.TypeNode {
+  const types = names.map(it => parseTypeNode(it)).filter(it => !isAnyType(it));
+  if (!!types.length) {
+    return ts.createUnionTypeNode(types);
+  } else {
+    return anyType;
+  }
+}
+
+function createParameter(name: string, params: ParamDef[] = []): ts.ParameterDeclaration {
+  const param = params.find(it => it.name === name);
+  const exactType = param && param.type ? parseTypeNodes(param.type.names) : undefined;
+  const type = exactType && !isAnyType(exactType) ? exactType : inferTypeByName(name);
   return ts.createParameter([], [], undefined, name, undefined, type);
 }
 
@@ -39,12 +58,24 @@ function createParameters(entry: JsDocEntry): ts.ParameterDeclaration[] {
   if (!entry.meta || !entry.meta.code.paramnames) {
     return [];
   }
-  return entry.meta.code.paramnames.map(name => createParameter(name));
+  return entry.meta.code.paramnames.map(name => createParameter(name, entry.params));
+}
+
+function createReturnType(entry: JsDocEntry): ts.TypeNode {
+  if (!entry.returns) {
+    return anyType;
+  }
+  const types = entry.returns.map(it => it.type && it.type.names.map(name => parseTypeNode(name)))
+    .flat().filter(it => !!it).map(it => it!);
+  if (!types.length) {
+    return anyType;
+  }
+  return ts.createUnionTypeNode(types);
 }
 
 function createMethod(entry: JsDocEntry): ts.MethodDeclaration {
   return ts.createMethod([], modifierOf(entry), undefined, entry.name!, undefined, undefined,
-    createParameters(entry), undefined, undefined);
+    createParameters(entry), createReturnType(entry), undefined);
 }
 
 function detectType(value: boolean | number | string): ts.KeywordTypeNode['kind'] {
