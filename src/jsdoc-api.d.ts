@@ -84,6 +84,7 @@ export interface Code {
   value: boolean | number | string;
   // 局部变量所属的函数全名
   funcscope?: string;
+  fragment?: string;
 }
 
 export enum Type {
@@ -101,6 +102,8 @@ export enum Type {
   FunctionDeclaration = 'FunctionDeclaration',
   // 函数表达式式声明（匿名函数赋值）
   FunctionExpression = 'FunctionExpression',
+  // 用对象赋值
+  ObjectExpression = 'ObjectExpression',
   // 对属性赋值
   Identifier = 'Identifier',
   // 字面量赋值
