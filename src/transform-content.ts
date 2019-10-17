@@ -2,40 +2,7 @@ import { Code, JsDocEntry } from 'jsdoc-api';
 import { uniqBy } from 'lodash';
 import * as ts from 'typescript';
 import { isArray, isBoolean, isNumber, isString } from 'util';
-
-const typeMapping = {
-  cell: 'mxCell',
-  evt: 'Event',
-  node: 'Node',
-  container: 'HTMLElement',
-  width: 'number',
-  height: 'number',
-  w: 'number',
-  h: 'number',
-  length: 'number',
-  index: 'number',
-  x: 'number',
-  y: 'number',
-  dx: 'number',
-  dy: 'number',
-  href: 'string',
-  text: 'string',
-  url: 'string',
-  target: 'string',
-  link: 'string',
-  name: 'string',
-  '^\w+Name$': 'string',
-  str: 'string',
-  label: 'string',
-  html: 'string',
-  clone: 'boolean',
-  '^has\w+$': 'boolean',
-  showText: 'boolean',
-  nocrop: 'boolean',
-  allowOpener: 'boolean',
-  names: 'string[]',
-  cells: 'mxCell[]',
-};
+import { typeMapping } from './type-mapping';
 
 export function getClasses(jsDocAst: JsDocEntry[]): JsDocEntry[] {
   return jsDocAst.filter(it => it.kind === 'class');
