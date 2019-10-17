@@ -10,7 +10,8 @@ describe('transform ast', () => {
   });
 
   it('parse TS', () => {
-    const source = ts.createSourceFile('', '/** a */\nconst a: Temp', ts.ScriptTarget.ES2015);
-    console.log(source.statements);
+    const source = ts.createSourceFile('', 'const a: string[]', ts.ScriptTarget.ES2015);
+    const statement = source.statements[0] as ts.VariableStatement;
+    console.log(statement.declarationList.declarations[0].type);
   });
 });

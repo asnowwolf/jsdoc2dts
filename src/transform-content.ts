@@ -3,65 +3,54 @@ import { uniqBy } from 'lodash';
 import * as ts from 'typescript';
 import { isArray, isBoolean, isNumber, isString } from 'util';
 
-const ReferenceTypes = {
+const typeMapping = {
   cell: 'mxCell',
   evt: 'Event',
   node: 'Node',
   container: 'HTMLElement',
-};
-
-const KeywordTypes = {
-  width: ts.SyntaxKind.NumberKeyword,
-  height: ts.SyntaxKind.NumberKeyword,
-  w: ts.SyntaxKind.NumberKeyword,
-  h: ts.SyntaxKind.NumberKeyword,
-  length: ts.SyntaxKind.NumberKeyword,
-  index: ts.SyntaxKind.NumberKeyword,
-  x: ts.SyntaxKind.NumberKeyword,
-  y: ts.SyntaxKind.NumberKeyword,
-  dx: ts.SyntaxKind.NumberKeyword,
-  dy: ts.SyntaxKind.NumberKeyword,
-  href: ts.SyntaxKind.StringKeyword,
-  text: ts.SyntaxKind.StringKeyword,
-  url: ts.SyntaxKind.StringKeyword,
-  target: ts.SyntaxKind.StringKeyword,
-  link: ts.SyntaxKind.StringKeyword,
-  name: ts.SyntaxKind.StringKeyword,
-  tagName: ts.SyntaxKind.StringKeyword,
-  evtName: ts.SyntaxKind.StringKeyword,
-  str: ts.SyntaxKind.StringKeyword,
-  attributeName: ts.SyntaxKind.StringKeyword,
-  label: ts.SyntaxKind.StringKeyword,
-  html: ts.SyntaxKind.StringKeyword,
-  clone: ts.SyntaxKind.BooleanKeyword,
-  hasShadow: ts.SyntaxKind.BooleanKeyword,
-  showText: ts.SyntaxKind.BooleanKeyword,
-  nocrop: ts.SyntaxKind.BooleanKeyword,
-  allowOpener: ts.SyntaxKind.BooleanKeyword,
-};
-
-const ArrayTypes = {
-  names: ts.createArrayTypeNode(ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)),
-  cells: ts.createArrayTypeNode(ts.createTypeReferenceNode('mxCell', undefined)),
+  width: 'number',
+  height: 'number',
+  w: 'number',
+  h: 'number',
+  length: 'number',
+  index: 'number',
+  x: 'number',
+  y: 'number',
+  dx: 'number',
+  dy: 'number',
+  href: 'string',
+  text: 'string',
+  url: 'string',
+  target: 'string',
+  link: 'string',
+  name: 'string',
+  '^\w+Name$': 'string',
+  str: 'string',
+  label: 'string',
+  html: 'string',
+  clone: 'boolean',
+  '^has\w+$': 'boolean',
+  showText: 'boolean',
+  nocrop: 'boolean',
+  allowOpener: 'boolean',
+  names: 'string[]',
+  cells: 'mxCell[]',
 };
 
 export function getClasses(jsDocAst: JsDocEntry[]): JsDocEntry[] {
   return jsDocAst.filter(it => it.kind === 'class');
 }
 
-function inferTypeByName(name: string): ts.TypeNode | undefined {
-  const referenceType = ReferenceTypes[name];
-  if (referenceType) {
-    return ts.createTypeReferenceNode(referenceType, undefined);
-  }
-  const keywordType = KeywordTypes[name];
-  if (keywordType) {
-    return ts.createKeywordTypeNode(keywordType);
-  }
+function parseTypeNode(typeExpression: string): ts.TypeNode | undefined {
+  const sourceFile = ts.createSourceFile('anonymouse.js', `const a: ${typeExpression}`, ts.ScriptTarget.ES5);
+  const statement = sourceFile.statements[0] as ts.VariableStatement;
+  return statement.declarationList.declarations[0].type;
+}
 
-  const arrayType = ArrayTypes[name];
-  if (arrayType) {
-    return arrayType;
+function inferTypeByName(name: string): ts.TypeNode | undefined {
+  const [, typeExpression] = Object.entries(typeMapping).find(([key, value]) => new RegExp(key).test(name)) || [];
+  if (typeExpression) {
+    return parseTypeNode(typeExpression);
   }
 }
 
