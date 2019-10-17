@@ -15,7 +15,8 @@ function parseTypeNode(typeExpression: string): ts.TypeNode | undefined {
 }
 
 function inferTypeByName(name: string): ts.TypeNode | undefined {
-  const [, typeExpression] = Object.entries(typeMapping).find(([key, value]) => new RegExp(key).test(name)) || [];
+  const entries = Object.entries(typeMapping);
+  const [, typeExpression] = entries.find(([key]) => new RegExp(`^${key}$`).test(name)) || [];
   if (typeExpression) {
     return parseTypeNode(typeExpression);
   }
@@ -65,7 +66,7 @@ function detectArrayType(value: string): ts.KeywordTypeNode['kind'] {
   return ts.SyntaxKind.AnyKeyword;
 }
 
-function typeOf(code: Code): ts.TypeNode {
+function typeOf(code: Code): ts.TypeNode | undefined {
   switch (code.type) {
     // 数组
     case 'ArrayExpression':
@@ -105,13 +106,17 @@ function typeOf(code: Code): ts.TypeNode {
     //   return ts.createTypeNode();
     // // new 表达式
     case 'NewExpression':
-      const typeName = code.fragment!.replace(/^.*\bnew +(\w+).*$/, '$1');
-      return ts.createTypeReferenceNode(typeName, []);
+      const matches = code.fragment!.match(/^.*\bnew +(\w+).*$/);
+      if (matches) {
+        return ts.createTypeReferenceNode(matches[1], []);
+      } else {
+        return inferTypeByName(code.name);
+      }
     // 一元表达式
     case 'UnaryExpression':
       return ts.createKeywordTypeNode(detectType(code.value));
     default:
-      return ts.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword);
+      return inferTypeByName(code.name);
   }
 }
 
