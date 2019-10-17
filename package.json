@@ -5,7 +5,8 @@
   "bin": {
     "jsdoc2ts": "dist/bin/index.js"
   },
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "preferGlobal": true,
   "author": "Zhicheng Wang<asnowwolf@gmail.com>",
   "homepage": "https://github.com/asnowwolf/jsdoc-to-ts",
   "repository": {

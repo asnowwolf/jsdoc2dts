@@ -27,7 +27,9 @@ interface Params {
 }
 
 export const handler = function ({ sourceGlob, targetDir, types }: Params) {
-  const mapping = JSON.parse(readFileSync(types, 'utf-8'));
-  Object.assign(typeMapping, mapping);
+  if (types) {
+    const mapping = JSON.parse(readFileSync(types, 'utf-8'));
+    Object.assign(typeMapping, mapping);
+  }
   docToDts(sourceGlob, targetDir);
 };
