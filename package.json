@@ -1,20 +1,20 @@
 {
-  "name": "@awesome-fe/jsdoc-to-dts",
-  "description": "transform jsdoc to dts",
+  "name": "@awesome-fe/jsdoc-to-ts",
+  "description": "transform jsdoc to ts",
   "main": "./dist/index.js",
   "bin": {
-    "nt": "dist/bin/index.js"
+    "jsdoc2ts": "dist/bin/index.js"
   },
   "version": "0.0.1",
   "author": "Zhicheng Wang<asnowwolf@gmail.com>",
-  "homepage": "https://github.com/asnowwolf/jsdoc-to-dts",
+  "homepage": "https://github.com/asnowwolf/jsdoc-to-ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/asnowwolf/jsdoc-to-dts.git"
+    "url": "https://github.com/asnowwolf/jsdoc-to-ts.git"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/asnowwolf/jsdoc-to-dts/issues"
+    "url": "https://github.com/asnowwolf/jsdoc-to-ts/issues"
   },
   "scripts": {
     "start": "ts-node src/bin/index.ts",
