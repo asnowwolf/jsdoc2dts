@@ -86,7 +86,7 @@ function detectType(value: boolean | number | string): ts.KeywordTypeNode['kind'
   } else if (isString(value)) {
     return ts.SyntaxKind.StringKeyword;
   }
-  return ts.SyntaxKind.UnknownKeyword;
+  return ts.SyntaxKind.AnyKeyword;
 }
 
 function detectArrayType(value: string): ts.KeywordTypeNode['kind'] {
