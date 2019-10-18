@@ -123,9 +123,9 @@ function typeOf(code: Code): ts.TypeNode | undefined {
     // // 函数调用
     // case 'CallExpression':
     //   return ts.createTypeNode();
-    // // 条件表达式（三目）
-    case 'ConditionalExpression':
-      return ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+    // // // 条件表达式（三目）
+    // case 'ConditionalExpression':
+    //   return ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
     // // 普通函数声明
     case 'FunctionDeclaration':
       return ts.createTypeReferenceNode('Function', undefined);
