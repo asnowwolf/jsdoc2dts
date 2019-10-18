@@ -22,11 +22,11 @@ function parseTypeNode(typeExpression: string): ts.TypeNode {
   return statement.declarationList.declarations[0].type || anyType;
 }
 
-function inferTypeByName(name?: string): ts.TypeNode {
+export function inferTypeByName(name?: string): ts.TypeNode {
   if (!name) {
     return anyType;
   }
-  name = name.replace(/^this\./, '');
+  name = name.replace(/^.*?(\w+)$/, '$1');
   const entries = Object.entries(typeMapping);
   const [, typeExpression] = entries.find(([key]) => new RegExp(`^${key}$`).test(name!)) || [];
   if (typeExpression) {
@@ -159,13 +159,14 @@ function typeOf(code: Code): ts.TypeNode | undefined {
     case 'UnaryExpression':
       return ts.createKeywordTypeNode(detectType(code.value));
     default:
-      return inferTypeByName(code.name);
+      return anyType;
   }
 }
 
 function createProperty(entry: JsDocEntry): ts.PropertyDeclaration {
   const code = entry.meta!.code!;
-  const type = entry.type ? parseTypeNodes(entry.type.names) : typeOf(code);
+  const exactType = entry.type ? parseTypeNodes(entry.type.names) : typeOf(code);
+  const type = isAnyType(exactType) ? inferTypeByName(code.name) : exactType;
   return ts.createProperty([], modifierOf(entry), entry.name!, undefined, type, undefined);
 }
 
