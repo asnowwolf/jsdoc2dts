@@ -17,6 +17,7 @@ function parseTypeNode(typeExpression: string): ts.TypeNode {
 }
 
 function inferTypeByName(name: string): ts.TypeNode {
+  name = name.replace(/^this\./, '');
   const entries = Object.entries(typeMapping);
   const [, typeExpression] = entries.find(([key]) => new RegExp(`^${key}$`).test(name)) || [];
   if (typeExpression) {
@@ -147,7 +148,7 @@ function typeOf(code: Code): ts.TypeNode | undefined {
     case 'UnaryExpression':
       return ts.createKeywordTypeNode(detectType(code.value));
     default:
-      return inferTypeByName(code.name.replace(/^this\./, ''));
+      return inferTypeByName(code.name);
   }
 }
 
