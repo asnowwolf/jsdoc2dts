@@ -138,9 +138,9 @@ function typeOf(code: Code): ts.TypeNode | undefined {
     // // 字面量赋值
     case 'Literal':
       return ts.createKeywordTypeNode(detectType(code.value));
-    // 逻辑表达式
-    case 'LogicalExpression':
-      return ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+    // // 逻辑表达式
+    // case 'LogicalExpression':
+    //   return ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
     // 对象表达式
     case 'ObjectExpression':
       return ts.createKeywordTypeNode(ts.SyntaxKind.ObjectKeyword);
