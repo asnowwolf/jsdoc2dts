@@ -22,10 +22,13 @@ function parseTypeNode(typeExpression: string): ts.TypeNode {
   return statement.declarationList.declarations[0].type || anyType;
 }
 
-function inferTypeByName(name: string): ts.TypeNode {
+function inferTypeByName(name?: string): ts.TypeNode {
+  if (!name) {
+    return anyType;
+  }
   name = name.replace(/^this\./, '');
   const entries = Object.entries(typeMapping);
-  const [, typeExpression] = entries.find(([key]) => new RegExp(`^${key}$`).test(name)) || [];
+  const [, typeExpression] = entries.find(([key]) => new RegExp(`^${key}$`).test(name!)) || [];
   if (typeExpression) {
     return parseTypeNode(typeExpression);
   } else {
@@ -69,15 +72,17 @@ function createParameters(entry: JsDocEntry): ts.ParameterDeclaration[] {
 }
 
 function createReturnType(entry: JsDocEntry): ts.TypeNode {
-  if (!entry.returns) {
-    return anyType;
+  if (entry.returns) {
+    const types = entry.returns.map(it => it.type && it.type.names.map(name => parseTypeNode(name)))
+      .flat().filter(it => !!it).map(it => it!);
+    if (types.length) {
+      return ts.createUnionTypeNode(types);
+    }
   }
-  const types = entry.returns.map(it => it.type && it.type.names.map(name => parseTypeNode(name)))
-    .flat().filter(it => !!it).map(it => it!);
-  if (!types.length) {
-    return anyType;
+  if (entry.meta && entry.meta.code.fragment && !entry.meta!.code.fragment!.includes('return')) {
+    return ts.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword);
   }
-  return ts.createUnionTypeNode(types);
+  return inferTypeByName(entry.name);
 }
 
 function createMethod(entry: JsDocEntry): ts.MethodDeclaration {
@@ -181,7 +186,7 @@ function addComment<T extends ts.Node>(node: T, entry: JsDocEntry): T {
     const exampleComment = value && entry.meta!.code.type === 'Literal' ? ` * @example ${value}\n` : '';
     const comment = `${toMultilineComment(entry.description)}${exampleComment}`;
     if (comment) {
-      return ts.addSyntheticLeadingComment(node, ts.SyntaxKind.MultiLineCommentTrivia, `*\n${comment}`, true);
+      return ts.addSyntheticLeadingComment(node, ts.SyntaxKind.MultiLineCommentTrivia, ` *\n${comment}`, true);
     }
   }
   return node;
