@@ -11,6 +11,9 @@ export function getClasses(jsDocAst: JsDocEntry[]): JsDocEntry[] {
 const anyType = ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 
 function parseTypeNode(typeExpression: string): ts.TypeNode {
+  if (typeExpression === '*') {
+    return anyType;
+  }
   const sourceFile = ts.createSourceFile('anonymouse.js', `const a: ${typeExpression}`, ts.ScriptTarget.ES5);
   const statement = sourceFile.statements[0] as ts.VariableStatement;
   return statement.declarationList.declarations[0].type || anyType;
@@ -154,7 +157,8 @@ function typeOf(code: Code): ts.TypeNode | undefined {
 
 function createProperty(entry: JsDocEntry): ts.PropertyDeclaration {
   const code = entry.meta!.code!;
-  return ts.createProperty([], modifierOf(entry), entry.name!, undefined, typeOf(code), undefined);
+  const type = entry.type ? parseTypeNodes(entry.type.names) : typeOf(code);
+  return ts.createProperty([], modifierOf(entry), entry.name!, undefined, type, undefined);
 }
 
 function createConstructor(clazz: JsDocEntry): ts.ConstructorDeclaration {

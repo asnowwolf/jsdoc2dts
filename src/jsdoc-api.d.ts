@@ -50,6 +50,8 @@ export interface JsDocEntry {
   undocumented?: boolean;
   // 所属对象
   memberof?: string;
+  // @type 注释
+  type?: DataType;
   // @param 参数注释
   params?: ParamDef[];
   // @returns 返回值注释
