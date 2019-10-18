@@ -14,6 +14,9 @@ function parseTypeNode(typeExpression: string): ts.TypeNode {
   if (typeExpression === '*') {
     return anyType;
   }
+  if (typeExpression === 'function') {
+    typeExpression = 'Function';
+  }
   const sourceFile = ts.createSourceFile('anonymouse.js', `const a: ${typeExpression}`, ts.ScriptTarget.ES5);
   const statement = sourceFile.statements[0] as ts.VariableStatement;
   return statement.declarationList.declarations[0].type || anyType;
@@ -184,7 +187,7 @@ function addComment<T extends ts.Node>(node: T, entry: JsDocEntry): T {
 }
 
 export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statement> {
-  const entries = jsDocAst.filter(it => !!it.meta);
+  const entries = jsDocAst.filter(it => !!it.meta).filter(it => !!it.name).filter(it => !it.name!.includes('['));
 
   const statements = getClasses(entries).map(clazz => {
     const members = uniqBy(entries.filter(it => it.memberof === clazz.name), 'name');
