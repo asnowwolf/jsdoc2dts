@@ -186,7 +186,7 @@ function addComment<T extends ts.Node>(node: T, entry: JsDocEntry): T {
     const exampleComment = value && entry.meta!.code.type === 'Literal' ? ` * @example ${value}\n` : '';
     const comment = `${toMultilineComment(entry.description)}${exampleComment}`;
     if (comment) {
-      return ts.addSyntheticLeadingComment(node, ts.SyntaxKind.MultiLineCommentTrivia, ` *\n${comment}`, true);
+      return ts.addSyntheticLeadingComment(node, ts.SyntaxKind.MultiLineCommentTrivia, `*\n${comment} `, true);
     }
   }
   return node;
