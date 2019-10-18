@@ -178,12 +178,13 @@ function toMultilineComment(comment?: string): string {
 function addComment<T extends ts.Node>(node: T, entry: JsDocEntry): T {
   const value = entry.meta && entry.meta.code && entry.meta.code.value;
   if (entry.description || value) {
-    const exampleComment = value ? ` * @example ${value}\n` : '';
-    const comment = `*\n${toMultilineComment(entry.description)}${exampleComment} `;
-    return ts.addSyntheticLeadingComment(node, ts.SyntaxKind.MultiLineCommentTrivia, comment, true);
-  } else {
-    return node;
+    const exampleComment = value && entry.meta!.code.type === 'Literal' ? ` * @example ${value}\n` : '';
+    const comment = `${toMultilineComment(entry.description)}${exampleComment}`;
+    if (comment) {
+      return ts.addSyntheticLeadingComment(node, ts.SyntaxKind.MultiLineCommentTrivia, `*\n${comment}`, true);
+    }
   }
+  return node;
 }
 
 export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statement> {
