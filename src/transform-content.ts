@@ -109,7 +109,7 @@ function typeOf(code: Code): ts.TypeNode | undefined {
     // 数组
     case 'ArrayExpression':
       return ts.createArrayTypeNode(ts.createKeywordTypeNode(detectArrayType(code.value as string)));
-    // // 赋值表达式（局部变量）
+    // // 赋值表达式，如 a = b = 1;
     // case 'AssignmentExpression':
     //   return ts.createTypeNode();
     // // 二元表达式
@@ -122,11 +122,11 @@ function typeOf(code: Code): ts.TypeNode | undefined {
     case 'ConditionalExpression':
       return ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
     // // 普通函数声明
-    // case 'FunctionDeclaration':
-    //   return ts.createKeywordTypeNode(ts.SyntaxKind.FunctionKeyword);
-    // // 函数表达式式声明（匿名函数赋值）
-    // case 'FunctionExpression':
-    //   return ts.createTypeNode();
+    case 'FunctionDeclaration':
+      return ts.createTypeReferenceNode('Function', undefined);
+    // 函数表达式式声明（匿名函数赋值）
+    case 'FunctionExpression':
+      return ts.createTypeReferenceNode('Function', undefined);
     // // 对属性赋值
     // case 'Identifier':
     //   return ts.createTypeNode();
