@@ -13,6 +13,9 @@ function findFirstDiffIndex(parts: string[][]): number {
 }
 
 export function removeCommonParts(files: string[]): string[] {
+  if (!files.join('')) {
+    return [];
+  }
   const parts = files.map(file => file.split(path.sep));
   const index = findFirstDiffIndex(parts);
   if (index === -1) {
