@@ -79,7 +79,7 @@ function createReturnType(entry: JsDocEntry): ts.TypeNode {
       return ts.createUnionTypeNode(types);
     }
   }
-  if (entry.meta && entry.meta.code.fragment && !entry.meta!.code.fragment!.match('\breturn +')) {
+  if (entry.meta && entry.meta.code.fragment && !entry.meta!.code.fragment!.match(/\breturn +/)) {
     return ts.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword);
   }
   return inferTypeByName(entry.name);
