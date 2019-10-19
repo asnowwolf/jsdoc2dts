@@ -14,8 +14,11 @@ function parseTypeNode(typeExpression: string): ts.TypeNode {
   if (typeExpression === '*') {
     return anyType;
   }
-  if (typeExpression === 'function') {
+  if (typeExpression === 'function' || typeExpression === 'callback') {
     typeExpression = 'Function';
+  }
+  if (typeExpression === 'Object') {
+    typeExpression = 'object';
   }
   const sourceFile = ts.createSourceFile('anonymouse.js', `const a: ${typeExpression}`, ts.ScriptTarget.ES5);
   const statement = sourceFile.statements[0] as ts.VariableStatement;
