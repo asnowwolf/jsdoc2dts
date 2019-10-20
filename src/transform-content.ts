@@ -17,6 +17,9 @@ function parseTypeNode(typeExpression: string): ts.TypeNode {
   if (typeExpression === 'function' || typeExpression === 'callback') {
     typeExpression = 'Function';
   }
+  if (typeExpression === 'Array.<function()>') {
+    typeExpression = 'Function[]';
+  }
   if (typeExpression === 'Object') {
     typeExpression = 'object';
   }
