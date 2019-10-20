@@ -16,6 +16,10 @@ export function removeCommonParts(files: string[]): string[] {
   if (!files.join('')) {
     return [];
   }
+  if (files.length === 1) {
+    const filename = files[0];
+    return [path.basename(filename)];
+  }
   const parts = files.map(file => file.split(path.sep));
   const index = findFirstDiffIndex(parts);
   if (index === -1) {
