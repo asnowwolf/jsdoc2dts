@@ -3,9 +3,9 @@ import { CommandBuilder } from 'yargs';
 import { docToTs } from '../../doc-to-ts';
 import { typeMapping } from '../../type-mapping';
 
-export const command = `dts <targetDir> <sourceGlob...>`;
+export const command = `ts <targetDir> <sourceGlob...>`;
 
-export const describe = 'Collect jsdoc comments from es5/es6 source, output in *.d.ts format, and put them in targetDir directory';
+export const describe = 'Collect jsdoc comments from es5/es6 source, output in *.ts format, and put them in targetDir directory';
 
 export const builder: CommandBuilder = {
   targetDir: {
