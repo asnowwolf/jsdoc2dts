@@ -31,5 +31,5 @@ export const handler = function ({ sourceGlob, targetDir, types }: Params) {
     const mapping = JSON.parse(readFileSync(types, 'utf-8'));
     Object.assign(typeMapping, mapping);
   }
-  docToTs(sourceGlob, targetDir, true);
+  docToTs(sourceGlob, targetDir, false);
 };

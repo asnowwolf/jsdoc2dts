@@ -55,6 +55,10 @@ function parseTypeNodes(names: string[]): ts.TypeNode {
   }
 }
 
+function parseStatements(script: string): ts.NodeArray<ts.Statement> {
+  return ts.createSourceFile('anonymouse.js', script, ts.ScriptTarget.ES5).statements;
+}
+
 function createParameter(name: string, params: ParamDef[] = []): ts.ParameterDeclaration {
   const param = params.find(it => it.name === name);
   const exactType = param && param.type ? parseTypeNodes(param.type.names) : undefined;
@@ -91,9 +95,20 @@ function createReturnType(entry: JsDocEntry): ts.TypeNode {
   return inferTypeByName(entry.name);
 }
 
-function createMethod(entry: JsDocEntry): ts.MethodDeclaration {
+function createBody(entry: JsDocEntry): ts.Block | undefined {
+  if (!entry.meta || !entry.meta.code.fragment) {
+    return;
+  }
+  const statements = parseStatements(entry.meta.code.fragment);
+  const statement = statements[0] as ts.ExpressionStatement;
+  const expression = statement.expression as ts.AssignmentExpression<ts.AssignmentOperatorToken>;
+  const fn = expression.right as ts.FunctionExpression;
+  return ts.createBlock(fn.body.statements, true);
+}
+
+function createMethod(dts: boolean, entry: JsDocEntry): ts.MethodDeclaration {
   return ts.createMethod([], modifierOf(entry), undefined, entry.name!, undefined, undefined,
-    createParameters(entry), createReturnType(entry), undefined);
+    createParameters(entry), createReturnType(entry), dts ? undefined : createBody(entry));
 }
 
 function detectType(value: boolean | number | string): ts.KeywordTypeNode['kind'] {
@@ -173,15 +188,33 @@ function createProperty(entry: JsDocEntry): ts.PropertyDeclaration {
   const code = entry.meta!.code!;
   const exactType = entry.type ? parseTypeNodes(entry.type.names) : typeOf(code);
   const type = isAnyType(exactType) ? inferTypeByName(code.name) : exactType;
+
   return ts.createProperty([], modifierOf(entry), entry.name!, undefined, type, undefined);
 }
 
-function createConstructor(clazz: JsDocEntry): ts.ConstructorDeclaration[] {
+function parseConstructor(entry: JsDocEntry): ts.Block | undefined {
+  if (!entry.meta || !entry.meta.code.fragment) {
+    return;
+  }
+  const statements = parseStatements(entry.meta.code.fragment);
+  if (statements[0].kind === ts.SyntaxKind.FunctionExpression || statements[0].kind === ts.SyntaxKind.FunctionDeclaration) {
+    const statement = statements[0] as any as ts.FunctionExpression;
+    return ts.createBlock(ts.createNodeArray(statement.body.statements, true), true);
+  } else if (statements[0].kind === ts.SyntaxKind.ExpressionStatement) {
+    return createBody(entry);
+  } else {
+    debugger;
+  }
+}
+
+
+function createConstructor(dts: boolean, clazz: JsDocEntry): ts.ConstructorDeclaration[] {
   const params = createParameters(clazz);
   if (!params.length) {
     return [];
   }
-  return [ts.createConstructor([], [], params, undefined)];
+  const body = parseConstructor(clazz);
+  return [ts.createConstructor([], [], params, dts ? undefined : body)];
 }
 
 function toMultilineComment(comment?: string): string {
@@ -213,7 +246,7 @@ function createHeritageClauses(clazz: JsDocEntry): ts.HeritageClause[] {
   ));
 }
 
-export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statement> {
+export function transformContent(jsDocAst: JsDocEntry[], dts: boolean): ts.NodeArray<ts.Statement> {
   const entries = jsDocAst
     .filter(it => !!it.meta)
     .filter(it => !!it.name)
@@ -225,16 +258,16 @@ export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statem
     const variables = members.filter(it => it.kind === 'member' && it.scope === 'instance')
       .map(it => addComment(createProperty(it), it));
     const methods = members.filter(it => it.kind === 'function' && it.scope === 'instance')
-      .map(it => addComment(createMethod(it), it));
+      .map(it => addComment(createMethod(dts, it), it));
     const staticVariables = members.filter(it => it.kind === 'member' && it.scope === 'static')
       .map(it => addComment(createProperty(it), it));
     const staticMethods = members.filter(it => it.kind === 'function' && it.scope === 'static')
-      .map(it => addComment(createMethod(it), it));
-    const constructor = createConstructor(clazz);
+      .map(it => addComment(createMethod(dts, it), it));
+    const constructor = createConstructor(dts, clazz);
     const heritageClauses = createHeritageClauses(clazz);
     return addComment(ts.createClassDeclaration(
       [],
-      [ts.createModifier(ts.SyntaxKind.DeclareKeyword)],
+      [ts.createModifier(dts ? ts.SyntaxKind.DeclareKeyword : ts.SyntaxKind.ExportKeyword)],
       clazz.name,
       [],
       heritageClauses,
