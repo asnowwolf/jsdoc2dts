@@ -246,14 +246,8 @@ function createHeritageClauses(clazz: JsDocEntry): ts.HeritageClause[] {
   ));
 }
 
-export function transformContent(jsDocAst: JsDocEntry[], dts: boolean): ts.NodeArray<ts.Statement> {
-  const entries = jsDocAst
-    .filter(it => !!it.meta)
-    .filter(it => !!it.name)
-    .filter(it => !it.name!.includes('['))
-    .filter(it => it.name! !== 'constructor');
-
-  const statements = getClasses(entries).map(clazz => {
+function createClasses(entries: JsDocEntry[], dts: boolean): ts.ClassDeclaration[] {
+  return getClasses(entries).map(clazz => {
     const members = uniqBy(entries.filter(it => it.memberof === clazz.name), 'name');
     const variables = members.filter(it => it.kind === 'member' && it.scope === 'instance')
       .map(it => addComment(createProperty(it), it));
@@ -280,6 +274,35 @@ export function transformContent(jsDocAst: JsDocEntry[], dts: boolean): ts.NodeA
       ],
     ), clazz);
   });
+}
 
-  return ts.createNodeArray(statements, true);
+function parseInitializer(code: Code): ts.Expression | undefined {
+  if (!code.fragment) {
+    return;
+  }
+  const source = ts.createSourceFile('anonymous.js', code.fragment, ts.ScriptTarget.ES5);
+  const statement = source.statements[0] as ts.ExpressionStatement;
+  const assign = statement.expression as ts.BinaryExpression;
+  return assign.right;
+}
+
+function createVariables(entries: JsDocEntry[], dts: boolean): ts.VariableStatement[] {
+  const members = entries.filter(it => it.scope === 'global' && it.kind === 'member' && /^\w+$/.test(it.name!));
+  return members.map(member => ts.createVariableStatement(
+    [ts.createModifier(dts ? ts.SyntaxKind.DeclareKeyword : ts.SyntaxKind.ExportKeyword)],
+    [ts.createVariableDeclaration(member.name!, undefined, parseInitializer(member.meta!.code))],
+  ));
+}
+
+export function transformContent(jsDocAst: JsDocEntry[], dts: boolean): ts.NodeArray<ts.Statement> {
+  const entries = jsDocAst
+    .filter(it => !!it.meta)
+    .filter(it => !!it.name)
+    .filter(it => !it.name!.includes('['))
+    .filter(it => it.name! !== 'constructor');
+
+  const variables: ts.Statement[] = createVariables(entries, dts);
+  const classes: ts.Statement[] = createClasses(entries, dts);
+
+  return ts.createNodeArray<ts.Statement>([...variables, ...classes], true);
 }
