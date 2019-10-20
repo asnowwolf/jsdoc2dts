@@ -176,8 +176,12 @@ function createProperty(entry: JsDocEntry): ts.PropertyDeclaration {
   return ts.createProperty([], modifierOf(entry), entry.name!, undefined, type, undefined);
 }
 
-function createConstructor(clazz: JsDocEntry): ts.ConstructorDeclaration {
-  return ts.createConstructor([], [], createParameters(clazz), undefined);
+function createConstructor(clazz: JsDocEntry): ts.ConstructorDeclaration[] {
+  const params = createParameters(clazz);
+  if (!params.length) {
+    return [];
+  }
+  return [ts.createConstructor([], [], params, undefined)];
 }
 
 function toMultilineComment(comment?: string): string {
@@ -200,7 +204,11 @@ function addComment<T extends ts.Node>(node: T, entry: JsDocEntry): T {
 }
 
 export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statement> {
-  const entries = jsDocAst.filter(it => !!it.meta).filter(it => !!it.name).filter(it => !it.name!.includes('['));
+  const entries = jsDocAst
+    .filter(it => !!it.meta)
+    .filter(it => !!it.name)
+    .filter(it => !it.name!.includes('['))
+    .filter(it => it.name! !== 'constructor');
 
   const statements = getClasses(entries).map(clazz => {
     const members = uniqBy(entries.filter(it => it.memberof === clazz.name), 'name');
@@ -220,7 +228,7 @@ export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statem
       [],
       [],
       [
-        constructor,
+        ...constructor,
         ...variables,
         ...methods,
         ...staticVariables,
