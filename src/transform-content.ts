@@ -281,9 +281,11 @@ function parseInitializer(code: Code): ts.Expression | undefined {
     return;
   }
   const source = ts.createSourceFile('anonymous.js', code.fragment, ts.ScriptTarget.ES5);
-  const statement = source.statements[0] as ts.ExpressionStatement;
-  const assign = statement.expression as ts.BinaryExpression;
-  return assign.right;
+  if (source.statements[0].kind === ts.SyntaxKind.ExpressionStatement) {
+    const statement = source.statements[0] as ts.ExpressionStatement;
+    const assign = statement.expression as ts.BinaryExpression;
+    return assign.right;
+  }
 }
 
 function createVariables(entries: JsDocEntry[], dts: boolean): ts.VariableStatement[] {
