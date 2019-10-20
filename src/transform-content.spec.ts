@@ -11,7 +11,7 @@ describe('transform ast', () => {
   });
 
   it('parse TS', () => {
-    const source = ts.createSourceFile('a.ts', 'const a: string[]', ts.ScriptTarget.ES2015);
+    const source = ts.createSourceFile('a.ts', 'class B extends A {}', ts.ScriptTarget.ES2015);
     const statement = source.statements[0] as ts.VariableStatement;
     console.log(statement.declarationList.declarations[0].type);
   });

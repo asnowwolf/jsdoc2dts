@@ -52,6 +52,8 @@ export interface JsDocEntry {
   memberof?: string;
   // @type 注释
   type?: DataType;
+  // 基类
+  augments: string[];
   // @param 参数注释
   params?: ParamDef[];
   // @returns 返回值注释

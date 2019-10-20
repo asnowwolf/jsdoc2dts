@@ -203,6 +203,16 @@ function addComment<T extends ts.Node>(node: T, entry: JsDocEntry): T {
   return node;
 }
 
+function createHeritageClauses(clazz: JsDocEntry): ts.HeritageClause[] {
+  if (!clazz.augments) {
+    return [];
+  }
+  return clazz.augments.map(name => ts.createHeritageClause(
+    ts.SyntaxKind.ExtendsKeyword,
+    [ts.createExpressionWithTypeArguments(undefined, ts.createIdentifier(name))],
+  ));
+}
+
 export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statement> {
   const entries = jsDocAst
     .filter(it => !!it.meta)
@@ -221,12 +231,13 @@ export function transformContent(jsDocAst: JsDocEntry[]): ts.NodeArray<ts.Statem
     const staticMethods = members.filter(it => it.kind === 'function' && it.scope === 'static')
       .map(it => addComment(createMethod(it), it));
     const constructor = createConstructor(clazz);
+    const heritageClauses = createHeritageClauses(clazz);
     return addComment(ts.createClassDeclaration(
       [],
       [ts.createModifier(ts.SyntaxKind.DeclareKeyword)],
       clazz.name,
       [],
-      [],
+      heritageClauses,
       [
         ...constructor,
         ...variables,

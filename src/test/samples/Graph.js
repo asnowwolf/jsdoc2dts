@@ -127,6 +127,7 @@ mxShape.prototype.getConstraints = function (style, w, h) {
  * @param stylesheet {mxStylesheet}
  * @param themes {object}
  * @param standalone {boolean}
+ * @extends {mxGraph}
  * @class
  */
 Graph = function (container, model, renderHint, stylesheet, themes, standalone) {
