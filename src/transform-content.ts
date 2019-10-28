@@ -276,26 +276,6 @@ function createClasses(entries: JsDocEntry[], dts: boolean): ts.ClassDeclaration
   });
 }
 
-function parseInitializer(code: Code): ts.Expression | undefined {
-  if (!code.fragment) {
-    return;
-  }
-  const source = ts.createSourceFile('anonymous.js', code.fragment, ts.ScriptTarget.ES5);
-  if (source.statements[0].kind === ts.SyntaxKind.ExpressionStatement) {
-    const statement = source.statements[0] as ts.ExpressionStatement;
-    const assign = statement.expression as ts.BinaryExpression;
-    return assign.right;
-  }
-}
-
-function createVariables(entries: JsDocEntry[], dts: boolean): ts.VariableStatement[] {
-  const members = entries.filter(it => it.scope === 'global' && it.kind === 'member' && /^\w+$/.test(it.name!));
-  return members.map(member => ts.createVariableStatement(
-    [ts.createModifier(dts ? ts.SyntaxKind.DeclareKeyword : ts.SyntaxKind.ExportKeyword)],
-    [ts.createVariableDeclaration(member.name!, undefined, parseInitializer(member.meta!.code))],
-  ));
-}
-
 export function transformContent(jsDocAst: JsDocEntry[], dts: boolean): ts.NodeArray<ts.Statement> {
   const entries = jsDocAst
     .filter(it => !!it.meta)
@@ -303,8 +283,7 @@ export function transformContent(jsDocAst: JsDocEntry[], dts: boolean): ts.NodeA
     .filter(it => !it.name!.includes('['))
     .filter(it => it.name! !== 'constructor');
 
-  const variables: ts.Statement[] = createVariables(entries, dts);
   const classes: ts.Statement[] = createClasses(entries, dts);
 
-  return ts.createNodeArray<ts.Statement>([...variables, ...classes], true);
+  return ts.createNodeArray<ts.Statement>([...classes], true);
 }
